@@ -15,17 +15,25 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.MutableLiveData
+import com.matensi.runrungo.R
 import com.matensi.runrungo.databinding.FragmentMainBinding
 import com.matensi.runrungo.location.LocationService
 import com.matensi.runrungo.utils.DialogManager
+import com.matensi.runrungo.utils.TimeUtils
 import com.matensi.runrungo.utils.checkPermission
 import com.matensi.runrungo.utils.showToast
 import org.osmdroid.config.Configuration
 import org.osmdroid.library.BuildConfig
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+import java.util.*
 
 class MainFragment : Fragment() {
+    private var isServiceRunning = false
+    private var timer: Timer? = null
+    private var startTime = 0L
+    private val timeData = MutableLiveData<String>()
     private lateinit var pLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var binding: FragmentMainBinding
 
@@ -41,11 +49,76 @@ class MainFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         registerPermissions()
+        setOnClicks()
+        checkServiceState()
+        updateTime()
+    }
+
+    private fun setOnClicks() = with(binding) {
+        val listener = onClicks()
+        fStartStop.setOnClickListener(listener)
+    }
+
+    private fun onClicks(): View.OnClickListener {
+        return View.OnClickListener {
+            when (it.id) {
+                R.id.fStartStop -> startStopService()
+            }
+        }
+    }
+
+    private fun updateTime(){
+        timeData.observe(viewLifecycleOwner){
+            binding.tvTime.text = it
+        }
+
+    }
+    private fun startTimer(){
+        timer?.cancel()
+        timer = Timer()
+        startTime = System.currentTimeMillis()
+        timer?.schedule(object : TimerTask(){
+            override fun run() {
+               activity?.runOnUiThread {
+                   timeData.value = getCurrentTime()
+               }
+
+            }
+
+        }, 1000,1000)
+    }
+
+    private fun getCurrentTime(): String{
+        return TimeUtils.getTime(System.currentTimeMillis() - startTime)
+    }
+
+
+    private fun startStopService(){
+        if(!isServiceRunning){
+            startLocService()
+        }else{
+            activity?.stopService(Intent(activity, LocationService::class.java))
+            binding.fStartStop.setImageResource(R.drawable.ic_play)
+            timer?.cancel()
+        }
+        isServiceRunning = !isServiceRunning
+    }
+
+    private fun checkServiceState(){
+        isServiceRunning = LocationService.isRunning
+        if(isServiceRunning){
+            binding.fStartStop.setImageResource(R.drawable.ic_stop)
+        }
+    }
+
+    private fun startLocService() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             activity?.startForegroundService(Intent(activity, LocationService::class.java))
-        } else{
+        } else {
             activity?.startService(Intent(activity, LocationService::class.java))
         }
+        binding.fStartStop.setImageResource(R.drawable.ic_stop)
+        startTimer()
     }
 
     override fun onResume() {
@@ -131,12 +204,12 @@ class MainFragment : Fragment() {
         if (!isEnabled) {
             DialogManager.showLocEnableDialog(
                 activity as AppCompatActivity,
-            object  : DialogManager.Listener{
-                override fun onClick() {
-                    startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                object : DialogManager.Listener {
+                    override fun onClick() {
+                        startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
 
-                }
-            })
+                    }
+                })
         }
     }
 
