@@ -29,6 +29,7 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.util.*
 
+
 class MainFragment : Fragment() {
     private var isServiceRunning = false
     private var timer: Timer? = null
@@ -109,6 +110,7 @@ class MainFragment : Fragment() {
         isServiceRunning = LocationService.isRunning
         if(isServiceRunning){
             binding.fStartStop.setImageResource(R.drawable.ic_stop)
+            startTimer()
         }
     }
 
@@ -161,6 +163,7 @@ class MainFragment : Fragment() {
             }
         }
     }
+
 
     private fun checkLocPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {

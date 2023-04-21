@@ -4,6 +4,7 @@ package com.matensi.runrungo.location
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.PendingIntent.FLAG_IMMUTABLE
 import android.app.Service
 import android.content.Intent
 import android.os.Build
@@ -45,19 +46,15 @@ class LocationService : Service() {
         }
 
         val nIntent = Intent(this, MainActivity::class.java)
-        val pIntent = PendingIntent.getActivity(
-            this,
-            10,
-            nIntent,
-            0
-        )
+        val pIntent = PendingIntent.getActivity(this, 0, nIntent, FLAG_IMMUTABLE)
         val notification = NotificationCompat.Builder(
             this,
             CHANNEL_ID
         ).setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Tracker Running!")
+            .setContentTitle("Сервис запущен")
             .setContentIntent(pIntent).build()
         startForeground(99, notification)
+
     }
 
     companion object {
