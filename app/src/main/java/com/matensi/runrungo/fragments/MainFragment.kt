@@ -76,6 +76,7 @@ class MainFragment : Fragment() {
     private fun startTimer(){
         timer?.cancel()
         timer = Timer()
+        startTime = LocationService.startTime
         startTime = System.currentTimeMillis()
         timer?.schedule(object : TimerTask(){
             override fun run() {
@@ -89,7 +90,7 @@ class MainFragment : Fragment() {
     }
 
     private fun getCurrentTime(): String{
-        return TimeUtils.getTime(System.currentTimeMillis() - startTime)
+        return "Время: ${TimeUtils.getTime(System.currentTimeMillis() - startTime)}"
     }
 
 
@@ -118,6 +119,7 @@ class MainFragment : Fragment() {
             activity?.startService(Intent(activity, LocationService::class.java))
         }
         binding.fStartStop.setImageResource(R.drawable.ic_stop)
+        LocationService.startTime = System.currentTimeMillis()
         startTimer()
     }
 
